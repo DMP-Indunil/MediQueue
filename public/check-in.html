@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="/login" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a href="/check-in" class="nav-link active"><i class="fas fa-clipboard-check"></i> Check-in</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="form-container">
+    <h1 style="text-align: center; color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.8rem;">
+      Patient Check-in
+    </h1>
+    <p style="text-align: center; color: #6c757d; margin-bottom: 2rem;">
+      Takes about 30 seconds to fill out
+    </p>
+
+    <div id="alertBox"></div>
+
+    <form id="checkInForm">
+      <div class="form-group">
+        <label class="form-label" for="clinicId">
+          Clinic ID
+        </label>
+        <input type="text" id="clinicId" class="form-input" required 
+               placeholder="Ask staff for this, or it's in the QR code">
+        <small style="color: #6c757d;">Usually 6-8 characters</small>
+      </div>
+
+      <h3 style="margin: 1.5rem 0 1rem; color: var(--dark); font-size: 1.2rem;">Your information</h3>
+
+      <div class="form-group">
+        <label class="form-label" for="firstName">First name</label>
+        <input type="text" id="firstName" class="form-input" required 
+               placeholder="John">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lastName">Last name</label>
+        <input type="text" id="lastName" class="form-input" required 
+               placeholder="Smith">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="phone">Phone number</label>
+        <input type="tel" id="phone" class="form-input" required 
+               placeholder="555-0123">
+        <small style="color: #6c757d;">We'll text you when it's your turn</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email (optional)</label>
+        <input type="email" id="email" class="form-input" 
+               placeholder="your.email@example.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="visitReason">
+          What are you here for?
+        </label>
+        <textarea id="visitReason" class="form-textarea" required 
+                  placeholder="Just a brief description - e.g., checkup, flu symptoms, follow-up visit"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="priority">How urgent is it?</label>
+        <select id="priority" class="form-select">
+          <option value="normal">Normal visit</option>
+          <option value="high">Pretty urgent</option>
+          <option value="emergency">Emergency</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <input type="checkbox" id="enableGPS" style="width: auto;">
+          <span>Share my location (helps verify you're here)</span>
+        </label>
+        <small style="color: #6c757d; margin-left: 1.5rem;">Optional but recommended</small>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+        Check In
+      </button>
+    </form>
+
+    <div id="successMessage" style="display: none; text-align: center; padding: 2rem;">
+      <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary-color);"></i>
+      <h2 style="color: var(--primary-color); margin: 1rem 0; font-size: 1.5rem;">All set!</h2>
+      <p style="font-size: 1rem; margin: 0.5rem 0;">You're number</p>
+      <div style="font-size: 2.5rem; font-weight: 600; color: var(--dark);" id="queuePosition">-</div>
+      <p style="margin: 1rem 0; color: #6c757d;">Estimated wait: <strong id="waitTime">-</strong> minutes</p>
+      <p style="color: #6c757d; font-size: 0.9rem;">Your ID: <code id="checkInId" style="background: #f8f9fa; padding: 0.3rem 0.6rem; border-radius: 3px; font-size: 0.85rem;"></code></p>
+      <p style="margin-top: 1.5rem; padding: 1rem; background: #e7f5ff; border-radius: 4px; color: #1b4965;">
+        We'll text you when it's almost time. You can wait in your car or grab a coffee nearby.
+      </p>
+      <a href="/" class="btn btn-secondary" style="margin-top: 1.5rem;">
+        Back to Home
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('checkInForm');
+    const alertBox = document.getElementById('alertBox');
+    const successMessage = document.getElementById('successMessage');
+
+    // Get clinic ID from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const clinicParam = urlParams.get('clinic');
+    if (clinicParam) {
+      document.getElementById('clinicId').value = clinicParam;
+    }
+
+    function showAlert(message, type = 'error') {
+      alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => { alertBox.innerHTML = ''; }, 5000);
+    }
+
+    async function getLocation() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: new Date().toISOString()
+            });
+          },
+          (error) => {
+            console.error('GPS error:', error);
+            resolve(null);
+          }
+        );
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Checking you in...';
+
+      try {
+        // Get location if enabled
+        let locationData = null;
+        if (document.getElementById('enableGPS').checked) {
+          showAlert('Getting your location...', 'info');
+          locationData = await getLocation();
+          if (!locationData) {
+            showAlert('Location not available, continuing anyway...', 'info');
+          }
+        }
+
+        const checkInData = {
+          clinicId: document.getElementById('clinicId').value.trim(),
+          patientInfo: {
+            firstName: document.getElementById('firstName').value.trim(),
+            lastName: document.getElementById('lastName').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            email: document.getElementById('email').value.trim()
+          },
+          visitReason: document.getElementById('visitReason').value.trim(),
+          priority: document.getElementById('priority').value,
+          locationData: locationData
+        };
+
+        const response = await fetch('/api/check-ins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(checkInData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Hide form and show success message
+          form.style.display = 'none';
+          successMessage.style.display = 'block';
+          document.getElementById('queuePosition').textContent = result.data.queuePosition;
+          document.getElementById('waitTime').textContent = result.data.estimatedWaitTime;
+          document.getElementById('checkInId').textContent = result.data.checkInId;
+
+          if (result.data.locationVerified) {
+            showAlert('Location verified - you are all set!', 'success');
+          }
+        } else {
+          showAlert(result.error || 'Something went wrong. Please try again.');
+        }
+      } catch (error) {
+        console.error('Check-in error:', error);
+        showAlert('Connection error. Check your internet and try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Check In';
+      }
+    });
+  </script>
+</body>
+</html>
