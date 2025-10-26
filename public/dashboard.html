@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="/login" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a href="/staff-dashboard" class="nav-link"><i class="fas fa-clipboard-list"></i> Staff Dashboard</a>
+        <a href="/dashboard" class="nav-link active"><i class="fas fa-th-large"></i> Queue View</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 80px;">
+    <h1 style="text-align: center; color: var(--primary-color); margin-bottom: 2rem;">
+      <i class="fas fa-th-large"></i> Clinic Dashboard
+    </h1>
+
+    <div style="max-width: 600px; margin: 0 auto 3rem;">
+      <div class="form-group">
+        <label class="form-label" for="clinicSelect">
+          <i class="fas fa-hospital"></i> Select Clinic
+        </label>
+        <select id="clinicSelect" class="form-select">
+          <option value="">Loading clinics...</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="dashboardContent" style="display: none;">
+      <div class="stats-grid" style="margin-bottom: 3rem;">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-number" id="currentlyWaiting">-</div>
+          <div class="stat-label">Currently Waiting</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+          <div class="stat-number" id="inService">-</div>
+          <div class="stat-label">In Service</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-number" id="completedToday">-</div>
+          <div class="stat-label">Completed Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+          <div class="stat-number" id="avgWaitTime">-</div>
+          <div class="stat-label">Avg Wait (min)</div>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2><i class="fas fa-list"></i> Current Queue</h2>
+          <button onclick="callNextPatient()" class="btn btn-primary">
+            <i class="fas fa-phone"></i> Call Next Patient
+          </button>
+        </div>
+        <div id="queueList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket;
+    let currentClinicId = null;
+
+    // Load clinics
+    async function loadClinics() {
+      try {
+        const response = await fetch('/api/clinics');
+        const result = await response.json();
+        
+        const select = document.getElementById('clinicSelect');
+        select.innerHTML = '<option value="">-- Select a clinic --</option>';
+        
+        if (result.success && result.data.length > 0) {
+          result.data.forEach(clinic => {
+            const option = document.createElement('option');
+            option.value = clinic.clinicId;
+            option.textContent = clinic.name;
+            select.appendChild(option);
+          });
+        } else {
+          select.innerHTML = '<option value="">No clinics found. Create one first.</option>';
+        }
+      } catch (error) {
+        console.error('Error loading clinics:', error);
+      }
+    }
+
+    // Load queue
+    async function loadQueue() {
+      if (!currentClinicId) return;
+
+      try {
+        const response = await fetch(`/api/queues/${currentClinicId}/current`);
+        const result = await response.json();
+
+        if (result.success) {
+          const queue = result.data.currentQueue;
+          const queueList = document.getElementById('queueList');
+
+          if (queue.length === 0) {
+            queueList.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No patients in queue</p>';
+            return;
+          }
+
+          queueList.innerHTML = queue.map(patient => `
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 1.2rem; color: var(--primary-color);">#${patient.position}</strong>
+                <span style="margin-left: 1rem;">${patient.patientName}</span>
+                <span style="margin-left: 1rem; padding: 0.25rem 0.5rem; background: ${getStatusColor(patient.status)}; color: white; border-radius: 15px; font-size: 0.8rem;">
+                  ${patient.status}
+                </span>
+                ${patient.priority !== 'normal' ? `<span style="margin-left: 0.5rem; color: red;">⚠️ ${patient.priority.toUpperCase()}</span>` : ''}
+              </div>
+              <div>
+                <small style="color: #666;">${patient.visitReason}</small>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading queue:', error);
+      }
+    }
+
+    // Load stats
+    async function loadStats() {
+      if (!currentClinicId) return;
+
+      try {
+        const response = await fetch(`/api/analytics/realtime/${currentClinicId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('currentlyWaiting').textContent = result.data.currentlyWaiting;
+          document.getElementById('inService').textContent = result.data.currentlyInService;
+          document.getElementById('completedToday').textContent = result.data.completedToday;
+          document.getElementById('avgWaitTime').textContent = result.data.avgWaitTime;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Call next patient
+    async function callNextPatient() {
+      if (!currentClinicId) return;
+
+      try {
+        const response = await fetch(`/api/queues/${currentClinicId}/call-next`, {
+          method: 'POST'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          alert(`Called: ${result.data.patientName}`);
+          loadQueue();
+          loadStats();
+        } else {
+          alert(result.error || 'No patients in queue');
+        }
+      } catch (error) {
+        console.error('Error calling patient:', error);
+        alert('Error calling next patient');
+      }
+    }
+
+    function getStatusColor(status) {
+      const colors = {
+        'waiting': '#FF9800',
+        'called': '#2196F3',
+        'in-service': '#4CAF50',
+        'completed': '#9E9E9E'
+      };
+      return colors[status] || '#757575';
+    }
+
+    // Clinic selection change
+    document.getElementById('clinicSelect').addEventListener('change', (e) => {
+      currentClinicId = e.target.value;
+      
+      if (currentClinicId) {
+        document.getElementById('dashboardContent').style.display = 'block';
+        
+        // Setup socket connection
+        if (socket) socket.disconnect();
+        socket = io();
+        socket.emit('join-clinic', currentClinicId);
+        
+        socket.on('queue-update', (data) => {
+          console.log('Queue update:', data);
+          loadQueue();
+          loadStats();
+        });
+
+        loadQueue();
+        loadStats();
+        
+        // Refresh every 30 seconds
+        setInterval(() => {
+          loadQueue();
+          loadStats();
+        }, 30000);
+      } else {
+        document.getElementById('dashboardContent').style.display = 'none';
+      }
+    });
+
+    // Initialize
+    loadClinics();
+  </script>
+</body>
+</html>
