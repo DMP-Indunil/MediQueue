@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="/login" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a href="/admin-dashboard" class="nav-link"><i class="fas fa-user-shield"></i> Admin Dashboard</a>
+        <a href="/analytics" class="nav-link active"><i class="fas fa-chart-line"></i> Analytics</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 80px;">
+    <h1 style="text-align: center; color: var(--primary-color); margin-bottom: 2rem;">
+      <i class="fas fa-chart-line"></i> Analytics Dashboard
+    </h1>
+
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 2rem;">
+      <h2 style="margin-bottom: 1rem;">System Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-hospital"></i></div>
+          <div class="stat-number" id="totalClinics">-</div>
+          <div class="stat-label">Total Clinics</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-number" id="totalPatients">-</div>
+          <div class="stat-label">Total Patients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+          <div class="stat-number" id="checkInsToday">-</div>
+          <div class="stat-label">Check-ins Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-number" id="servedToday">-</div>
+          <div class="stat-label">Served Today</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: var(--shadow);">
+      <p style="text-align: center; color: #666; padding: 2rem;">
+        <i class="fas fa-info-circle"></i> Select a clinic from the dashboard to view detailed analytics
+      </p>
+    </div>
+  </div>
+
+  <script>
+    async function loadOverview() {
+      try {
+        const response = await fetch('/api/analytics/overview');
+        const result = await response.json();
+        
+        if (result.success) {
+          document.getElementById('totalClinics').textContent = result.data.totalClinics;
+          document.getElementById('totalPatients').textContent = result.data.totalPatients;
+          document.getElementById('checkInsToday').textContent = result.data.checkInsToday;
+          document.getElementById('servedToday').textContent = result.data.patientsServedToday;
+        }
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    }
+
+    loadOverview();
+    setInterval(loadOverview, 30000);
+  </script>
+</body>
+</html>
