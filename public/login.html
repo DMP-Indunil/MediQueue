@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 8rem; max-width: 1200px;">
+    <div class="section-title" style="text-align: center; margin-bottom: 3rem;">
+      <h1>Welcome to MediQueue</h1>
+      <p style="color: #6c757d; font-size: 1.1rem;">Select your role to continue</p>
+    </div>
+
+    <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <!-- Patient -->
+      <div class="feature-card" style="cursor: pointer; transition: all 0.3s ease;" onclick="selectRole('patient')">
+        <div class="feature-icon" style="font-size: 4rem; margin-bottom: 1.5rem;">
+          <i class="fas fa-user"></i>
+        </div>
+        <h2 style="margin-bottom: 1rem;">Patient</h2>
+        <p style="color: #6c757d; margin-bottom: 1.5rem;">
+          Check-in remotely, track your queue position, and manage your appointments
+        </p>
+        <ul style="text-align: left; color: #6c757d; margin: 1.5rem 0;">
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Quick check-in</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Real-time status</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Visit history</li>
+        </ul>
+        <button class="btn btn-primary btn-large" style="width: 100%;">
+          <i class="fas fa-sign-in-alt"></i> Continue as Patient
+        </button>
+      </div>
+
+      <!-- Staff -->
+      <div class="feature-card" style="cursor: pointer; transition: all 0.3s ease;" onclick="selectRole('staff')">
+        <div class="feature-icon" style="font-size: 4rem; margin-bottom: 1.5rem;">
+          <i class="fas fa-user-nurse"></i>
+        </div>
+        <h2 style="margin-bottom: 1rem;">Staff</h2>
+        <p style="color: #6c757d; margin-bottom: 1.5rem;">
+          Manage patient queue, call next patient, and handle walk-in check-ins
+        </p>
+        <ul style="text-align: left; color: #6c757d; margin: 1.5rem 0;">
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Queue management</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Call patients</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Walk-in check-ins</li>
+        </ul>
+        <button class="btn btn-primary btn-large" style="width: 100%;">
+          <i class="fas fa-sign-in-alt"></i> Continue as Staff
+        </button>
+      </div>
+
+      <!-- Admin -->
+      <div class="feature-card" style="cursor: pointer; transition: all 0.3s ease;" onclick="selectRole('admin')">
+        <div class="feature-icon" style="font-size: 4rem; margin-bottom: 1.5rem;">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <h2 style="margin-bottom: 1rem;">Administrator</h2>
+        <p style="color: #6c757d; margin-bottom: 1.5rem;">
+          Access analytics, manage clinics and staff, configure system settings
+        </p>
+        <ul style="text-align: left; color: #6c757d; margin: 1.5rem 0;">
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Full analytics</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> Clinic management</li>
+          <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: var(--success-color);"></i> System settings</li>
+        </ul>
+        <button class="btn btn-primary btn-large" style="width: 100%;">
+          <i class="fas fa-sign-in-alt"></i> Continue as Admin
+        </button>
+      </div>
+    </div>
+
+    <!-- Login Form (Hidden by default) -->
+    <div id="loginForm" class="form-container" style="display: none; max-width: 500px; margin: 3rem auto;">
+      <h2 style="text-align: center; margin-bottom: 1.5rem;">
+        <i id="roleIcon" class="fas fa-user"></i> 
+        <span id="roleTitle">Patient</span> Login
+      </h2>
+
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email or Username</label>
+          <input type="text" id="username" class="form-input" required placeholder="Enter your email or username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-input" required placeholder="Enter your password">
+        </div>
+
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" style="width: auto;">
+            <span>Remember me</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <a href="#" style="color: var(--primary-color); text-decoration: none;">Forgot password?</a>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button" class="btn btn-secondary" onclick="backToRoles()" style="background: transparent; color: var(--primary-color); border: none;">
+            <i class="fas fa-arrow-left"></i> Back to role selection
+          </button>
+        </div>
+      </form>
+
+      <!-- Demo Credentials -->
+      <div style="margin-top: 2rem; padding: 1.5rem; background: #fff3cd; border-radius: 15px; border-left: 4px solid #ffc107;">
+        <h4 style="margin: 0 0 1rem 0; color: #856404;"><i class="fas fa-info-circle"></i> Demo Credentials</h4>
+        <div style="font-size: 0.9rem; color: #856404;">
+          <strong>Patient:</strong> patient@demo.com / demo123<br>
+          <strong>Staff:</strong> staff@demo.com / demo123<br>
+          <strong>Admin:</strong> admin@demo.com / demo123
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer" style="margin-top: 5rem;">
+    <div class="footer-content">
+      <p>&copy; 2025 MediQueue. All rights reserved.</p>
+      <p>Making healthcare more accessible, one queue at a time.</p>
+    </div>
+  </footer>
+
+  <script>
+    let selectedRole = null;
+
+    function selectRole(role) {
+      selectedRole = role;
+      
+      // Hide role selection cards
+      document.querySelectorAll('.features-grid')[0].style.display = 'none';
+      document.querySelector('.section-title').style.display = 'none';
+      
+      // Show login form
+      document.getElementById('loginForm').style.display = 'block';
+      
+      // Update form based on role
+      const roleIcons = {
+        patient: 'fa-user',
+        staff: 'fa-user-nurse',
+        admin: 'fa-user-shield'
+      };
+      
+      const roleTitles = {
+        patient: 'Patient',
+        staff: 'Staff',
+        admin: 'Administrator'
+      };
+      
+      document.getElementById('roleIcon').className = `fas ${roleIcons[role]}`;
+      document.getElementById('roleTitle').textContent = roleTitles[role];
+    }
+
+    function backToRoles() {
+      selectedRole = null;
+      
+      // Show role selection cards
+      document.querySelectorAll('.features-grid')[0].style.display = 'grid';
+      document.querySelector('.section-title').style.display = 'block';
+      
+      // Hide login form
+      document.getElementById('loginForm').style.display = 'none';
+      
+      // Clear form
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      // Simple demo authentication
+      const demoCredentials = {
+        'patient@demo.com': { password: 'demo123', role: 'patient', redirect: '/patient-portal' },
+        'staff@demo.com': { password: 'demo123', role: 'staff', redirect: '/staff-dashboard' },
+        'admin@demo.com': { password: 'demo123', role: 'admin', redirect: '/admin-dashboard' }
+      };
+      
+      if (demoCredentials[username] && demoCredentials[username].password === password) {
+        // Store auth info (in production, use proper authentication)
+        sessionStorage.setItem('userRole', demoCredentials[username].role);
+        sessionStorage.setItem('userName', username);
+        
+        // Redirect to appropriate dashboard
+        window.location.href = demoCredentials[username].redirect;
+      } else {
+        alert('Invalid credentials. Please use demo credentials shown below.');
+      }
+    }
+
+    // Check if user is already logged in
+    if (sessionStorage.getItem('userRole')) {
+      const role = sessionStorage.getItem('userRole');
+      const redirects = {
+        patient: '/patient-portal',
+        staff: '/staff-dashboard',
+        admin: '/admin-dashboard'
+      };
+      
+      if (confirm('You are already logged in. Continue to your dashboard?')) {
+        window.location.href = redirects[role];
+      }
+    }
+  </script>
+</body>
+</html>
