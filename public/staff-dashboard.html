@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Dashboard - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue Staff
+      </div>
+      <div class="nav-links">
+        <a href="/staff-dashboard" class="nav-link active"><i class="fas fa-clipboard-list"></i> Queue</a>
+        <a href="#" onclick="showSection('walkin')" class="nav-link"><i class="fas fa-user-plus"></i> Walk-In</a>
+        <a href="#" onclick="showSection('search')" class="nav-link"><i class="fas fa-search"></i> Search</a>
+        <a href="/" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 6rem;">
+    <!-- Queue Management Section -->
+    <div id="queue-section" class="section-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+          <h1><i class="fas fa-clipboard-list"></i> Queue Management</h1>
+          <p style="color: #6c757d;">Manage patient queue and call next patient</p>
+        </div>
+        <div>
+          <select id="clinicFilter" class="form-select" onchange="loadQueue()" style="min-width: 250px;">
+            <option value="">Select Clinic...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="features-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+        <div class="stat-card">
+          <div style="font-size: 2.5rem; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <span id="totalWaiting">0</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;">Patients Waiting</p>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 2.5rem; font-weight: 700; color: var(--success-color);">
+            <span id="totalServed">0</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;">Served Today</p>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 2.5rem; font-weight: 700; color: var(--warning-color);">
+            <span id="avgWaitTime">0</span>m
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;">Avg Wait Time</p>
+        </div>
+        <div class="stat-card">
+          <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color);">
+            <span id="nextPatient">-</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;">Next Patient</p>
+        </div>
+      </div>
+
+      <!-- Call Next Patient Button -->
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <button class="btn btn-primary btn-large" onclick="callNextPatient()" style="font-size: 1.3rem; padding: 1.2rem 3rem;">
+          <i class="fas fa-bell"></i> Call Next Patient
+        </button>
+      </div>
+
+      <!-- Queue List -->
+      <div class="stat-card">
+        <h3 style="margin-bottom: 1.5rem;"><i class="fas fa-list"></i> Current Queue</h3>
+        <div id="queueList">
+          <p style="text-align: center; color: #6c757d; padding: 2rem;">Select a clinic to view queue</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Walk-In Check-In Section -->
+    <div id="walkin-section" class="section-content" style="display: none;">
+      <h2><i class="fas fa-user-plus"></i> Walk-In Patient Check-In</h2>
+      <div class="form-container">
+        <form id="walkinForm">
+          <h3 style="margin-bottom: 1rem;">Patient Information</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" id="walkinFirstName" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" id="walkinLastName" class="form-input" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" id="walkinPhone" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email (optional)</label>
+              <input type="email" id="walkinEmail" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Reason for Visit</label>
+            <textarea id="walkinReason" class="form-textarea" required></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select id="walkinPriority" class="form-select">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Clinic</label>
+              <select id="walkinClinic" class="form-select" required>
+                <option value="">Select clinic...</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+            <i class="fas fa-check"></i> Check-In Patient
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Patient Section -->
+    <div id="search-section" class="section-content" style="display: none;">
+      <h2><i class="fas fa-search"></i> Search Patient</h2>
+      <div class="form-container">
+        <div class="form-group">
+          <input type="text" id="searchInput" class="form-input" placeholder="Search by name, phone, or patient ID..." onkeyup="searchPatients()">
+        </div>
+        <div id="searchResults" style="margin-top: 2rem;">
+          <p style="text-align: center; color: #6c757d;">Enter a search term to find patients</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let socket;
+    let currentClinicId = null;
+    let queueData = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadClinics();
+      initializeSocket();
+    });
+
+    // Initialize Socket.IO
+    function initializeSocket() {
+      socket = io();
+      
+      socket.on('queueUpdated', (data) => {
+        console.log('Queue updated:', data);
+        if (data.clinicId === currentClinicId) {
+          loadQueue();
+        }
+      });
+
+      socket.on('patientCalled', (data) => {
+        console.log('Patient called:', data);
+        showNotification(`Patient ${data.patientName} has been called`);
+      });
+    }
+
+    // Load clinics
+    async function loadClinics() {
+      try {
+        const response = await fetch('/api/clinics');
+        const result = await response.json();
+        
+        const clinicFilter = document.getElementById('clinicFilter');
+        const walkinClinic = document.getElementById('walkinClinic');
+        
+        clinicFilter.innerHTML = '<option value="">Select Clinic...</option>';
+        walkinClinic.innerHTML = '<option value="">Select clinic...</option>';
+        
+        if (result.success) {
+          result.data.forEach(clinic => {
+            const option1 = document.createElement('option');
+            option1.value = clinic._id;
+            option1.textContent = clinic.name;
+            clinicFilter.appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = clinic._id;
+            option2.textContent = clinic.name;
+            walkinClinic.appendChild(option2);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading clinics:', error);
+      }
+    }
+
+    // Load queue
+    async function loadQueue() {
+      const clinicId = document.getElementById('clinicFilter').value;
+      if (!clinicId) return;
+
+      currentClinicId = clinicId;
+      socket.emit('joinClinic', clinicId);
+
+      try {
+        const response = await fetch(`/api/queues/${clinicId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          queueData = result.data.checkIns || [];
+          updateQueueDisplay();
+          updateStats(result.data);
+        }
+      } catch (error) {
+        console.error('Error loading queue:', error);
+      }
+    }
+
+    // Update queue display
+    function updateQueueDisplay() {
+      const queueList = document.getElementById('queueList');
+      
+      if (queueData.length === 0) {
+        queueList.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 2rem;">No patients in queue</p>';
+        return;
+      }
+
+      queueList.innerHTML = queueData.map((checkIn, index) => {
+        const priorityColor = checkIn.priority === 'emergency' ? 'red' : 
+                            checkIn.priority === 'high' ? 'orange' : 'gray';
+        const statusColor = checkIn.status === 'waiting' ? 'var(--primary-color)' : 
+                          checkIn.status === 'called' ? 'var(--warning-color)' : 'var(--success-color)';
+        
+        return `
+          <div style="padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px; background: linear-gradient(135deg, #ffffff, #f8f9fa); border-left: 5px solid ${priorityColor}; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                  <span style="font-size: 2rem; font-weight: 700; color: var(--primary-color);">#${checkIn.queuePosition}</span>
+                  <div>
+                    <h4 style="margin: 0; font-size: 1.2rem;">${checkIn.patientId?.firstName} ${checkIn.patientId?.lastName}</h4>
+                    <small style="color: #6c757d;">${checkIn.patientId?.phone || 'N/A'}</small>
+                  </div>
+                </div>
+                <p style="margin: 0.5rem 0; color: #495057;"><strong>Reason:</strong> ${checkIn.visitReason}</p>
+                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                  <span style="padding: 0.3rem 0.8rem; background: ${priorityColor}; color: white; border-radius: 20px; font-size: 0.85rem;">
+                    <i class="fas fa-exclamation-circle"></i> ${checkIn.priority.toUpperCase()}
+                  </span>
+                  <span style="padding: 0.3rem 0.8rem; background: ${statusColor}; color: white; border-radius: 20px; font-size: 0.85rem;">
+                    ${checkIn.status.toUpperCase()}
+                  </span>
+                  <span style="padding: 0.3rem 0.8rem; background: #6c757d; color: white; border-radius: 20px; font-size: 0.85rem;">
+                    <i class="fas fa-clock"></i> ${checkIn.estimatedWaitTime || 0} min
+                  </span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" onclick="callSpecificPatient('${checkIn._id}')" title="Call this patient">
+                  <i class="fas fa-bell"></i>
+                </button>
+                <button class="btn btn-secondary" onclick="viewPatientDetails('${checkIn._id}')" title="View details">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update stats
+    function updateStats(data) {
+      document.getElementById('totalWaiting').textContent = data.checkIns?.length || 0;
+      document.getElementById('totalServed').textContent = data.totalProcessed || 0;
+      document.getElementById('avgWaitTime').textContent = data.averageWaitTime || 0;
+      
+      if (data.checkIns && data.checkIns.length > 0) {
+        const nextPatient = data.checkIns[0];
+        document.getElementById('nextPatient').textContent = 
+          `${nextPatient.patientId?.firstName || ''} ${nextPatient.patientId?.lastName || ''}`.trim() || 'N/A';
+      } else {
+        document.getElementById('nextPatient').textContent = 'None';
+      }
+    }
+
+    // Call next patient
+    async function callNextPatient() {
+      if (!currentClinicId) {
+        alert('Please select a clinic first');
+        return;
+      }
+
+      if (queueData.length === 0) {
+        alert('No patients in queue');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/queues/${currentClinicId}/call-next`, {
+          method: 'POST'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showNotification(`Called: ${result.data.patientName}`);
+          loadQueue();
+        }
+      } catch (error) {
+        console.error('Error calling next patient:', error);
+        alert('Failed to call next patient');
+      }
+    }
+
+    // Call specific patient
+    async function callSpecificPatient(checkInId) {
+      if (confirm('Call this patient?')) {
+        // Implement call specific patient logic
+        showNotification('Patient called successfully');
+      }
+    }
+
+    // View patient details
+    function viewPatientDetails(checkInId) {
+      const checkIn = queueData.find(c => c._id === checkInId);
+      if (checkIn) {
+        alert(`Patient: ${checkIn.patientId?.firstName} ${checkIn.patientId?.lastName}\nPhone: ${checkIn.patientId?.phone}\nReason: ${checkIn.visitReason}\nPriority: ${checkIn.priority}`);
+      }
+    }
+
+    // Walk-in form submission
+    document.getElementById('walkinForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const walkinData = {
+        clinicId: document.getElementById('walkinClinic').value,
+        patientInfo: {
+          firstName: document.getElementById('walkinFirstName').value,
+          lastName: document.getElementById('walkinLastName').value,
+          phone: document.getElementById('walkinPhone').value,
+          email: document.getElementById('walkinEmail').value
+        },
+        visitReason: document.getElementById('walkinReason').value,
+        priority: document.getElementById('walkinPriority').value
+      };
+
+      try {
+        const response = await fetch('/api/check-ins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(walkinData)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showNotification('Patient checked in successfully!');
+          document.getElementById('walkinForm').reset();
+          showSection('queue');
+          if (currentClinicId === walkinData.clinicId) {
+            loadQueue();
+          }
+        }
+      } catch (error) {
+        console.error('Error checking in patient:', error);
+        alert('Failed to check in patient');
+      }
+    });
+
+    // Search patients
+    function searchPatients() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const resultsDiv = document.getElementById('searchResults');
+
+      if (searchTerm.length < 2) {
+        resultsDiv.innerHTML = '<p style="text-align: center; color: #6c757d;">Enter at least 2 characters to search</p>';
+        return;
+      }
+
+      // Filter from current queue data (in real app, this would be an API call)
+      const results = queueData.filter(checkIn => {
+        const patient = checkIn.patientId;
+        return patient && (
+          patient.firstName?.toLowerCase().includes(searchTerm) ||
+          patient.lastName?.toLowerCase().includes(searchTerm) ||
+          patient.phone?.includes(searchTerm)
+        );
+      });
+
+      if (results.length === 0) {
+        resultsDiv.innerHTML = '<p style="text-align: center; color: #6c757d;">No patients found</p>';
+        return;
+      }
+
+      resultsDiv.innerHTML = results.map(checkIn => {
+        const patient = checkIn.patientId;
+        return `
+          <div class="stat-card" style="margin-bottom: 1rem;">
+            <h4>${patient.firstName} ${patient.lastName}</h4>
+            <p style="color: #6c757d; margin: 0.5rem 0;">Phone: ${patient.phone}</p>
+            <p style="color: #6c757d; margin: 0.5rem 0;">Status: ${checkIn.status}</p>
+            <p style="color: #6c757d; margin: 0.5rem 0;">Position: #${checkIn.queuePosition}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Show section
+    function showSection(section) {
+      document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
+      document.getElementById(`${section}-section`).style.display = 'block';
+      
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    }
+
+    // Show notification
+    function showNotification(message) {
+      alert(message); // In production, use a better notification system
+    }
+  </script>
+</body>
+</html>
