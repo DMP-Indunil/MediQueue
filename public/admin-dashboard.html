@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - MediQueue</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i> MediQueue Admin
+      </div>
+      <div class="nav-links">
+        <a href="#" onclick="showSection('overview')" class="nav-link active"><i class="fas fa-chart-line"></i> Overview</a>
+        <a href="#" onclick="showSection('clinics')" class="nav-link"><i class="fas fa-hospital"></i> Clinics</a>
+        <a href="#" onclick="showSection('staff')" class="nav-link"><i class="fas fa-users"></i> Staff</a>
+        <a href="#" onclick="showSection('settings')" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+        <a href="/" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 6rem;">
+    <!-- Overview Section -->
+    <div id="overview-section" class="section-content">
+      <h1><i class="fas fa-chart-line"></i> System Overview</h1>
+      <p style="color: #6c757d; margin-bottom: 2rem;">Real-time analytics and performance metrics</p>
+
+      <!-- Key Metrics -->
+      <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 3rem;">
+        <div class="stat-card">
+          <div style="font-size: 3rem; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <span id="totalPatients">0</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;"><i class="fas fa-users"></i> Total Patients</p>
+        </div>
+
+        <div class="stat-card">
+          <div style="font-size: 3rem; font-weight: 700; color: var(--success-color);">
+            <span id="totalClinics">0</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;"><i class="fas fa-hospital"></i> Active Clinics</p>
+        </div>
+
+        <div class="stat-card">
+          <div style="font-size: 3rem; font-weight: 700; color: var(--primary-color);">
+            <span id="totalCheckIns">0</span>
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;"><i class="fas fa-clipboard-check"></i> Today's Check-Ins</p>
+        </div>
+
+        <div class="stat-card">
+          <div style="font-size: 3rem; font-weight: 700; color: var(--warning-color);">
+            <span id="avgWait">0</span>m
+          </div>
+          <p style="color: #6c757d; margin-top: 0.5rem;"><i class="fas fa-clock"></i> Avg Wait Time</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="stat-card">
+          <h3><i class="fas fa-chart-bar"></i> Daily Check-Ins (Last 7 Days)</h3>
+          <canvas id="checkInsChart"></canvas>
+        </div>
+
+        <div class="stat-card">
+          <h3><i class="fas fa-chart-pie"></i> Priority Distribution</h3>
+          <canvas id="priorityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Clinic Performance -->
+      <div class="stat-card">
+        <h3><i class="fas fa-trophy"></i> Clinic Performance</h3>
+        <div id="clinicPerformance" style="margin-top: 1.5rem;">
+          <!-- Will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinics Section -->
+    <div id="clinics-section" class="section-content" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1><i class="fas fa-hospital"></i> Manage Clinics</h1>
+        <button class="btn btn-primary" onclick="showAddClinicForm()">
+          <i class="fas fa-plus"></i> Add New Clinic
+        </button>
+      </div>
+
+      <div id="clinicsList" class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+        <!-- Will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Staff Section -->
+    <div id="staff-section" class="section-content" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1><i class="fas fa-users"></i> Staff Management</h1>
+        <button class="btn btn-primary" onclick="showAddStaffForm()">
+          <i class="fas fa-user-plus"></i> Add Staff Member
+        </button>
+      </div>
+
+      <div class="stat-card">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e9ecef;">
+              <th style="padding: 1rem; text-align: left;">Name</th>
+              <th style="padding: 1rem; text-align: left;">Role</th>
+              <th style="padding: 1rem; text-align: left;">Clinic</th>
+              <th style="padding: 1rem; text-align: left;">Status</th>
+              <th style="padding: 1rem; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="staffTable">
+            <tr>
+              <td style="padding: 1rem;">Dr. Sarah Johnson</td>
+              <td style="padding: 1rem;"><span style="padding: 0.3rem 0.8rem; background: var(--primary-color); color: white; border-radius: 20px; font-size: 0.85rem;">Doctor</span></td>
+              <td style="padding: 1rem;">Downtown Medical Center</td>
+              <td style="padding: 1rem;"><span style="color: var(--success-color);"><i class="fas fa-circle"></i> Active</span></td>
+              <td style="padding: 1rem; text-align: center;">
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr style="border-top: 1px solid #e9ecef;">
+              <td style="padding: 1rem;">Emily Rodriguez</td>
+              <td style="padding: 1rem;"><span style="padding: 0.3rem 0.8rem; background: var(--success-color); color: white; border-radius: 20px; font-size: 0.85rem;">Receptionist</span></td>
+              <td style="padding: 1rem;">Downtown Medical Center</td>
+              <td style="padding: 1rem;"><span style="color: var(--success-color);"><i class="fas fa-circle"></i> Active</span></td>
+              <td style="padding: 1rem; text-align: center;">
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr style="border-top: 1px solid #e9ecef;">
+              <td style="padding: 1rem;">Dr. Michael Chen</td>
+              <td style="padding: 1rem;"><span style="padding: 0.3rem 0.8rem; background: var(--primary-color); color: white; border-radius: 20px; font-size: 0.85rem;">Doctor</span></td>
+              <td style="padding: 1rem;">Riverside Family Clinic</td>
+              <td style="padding: 1rem;"><span style="color: var(--success-color);"><i class="fas fa-circle"></i> Active</span></td>
+              <td style="padding: 1rem; text-align: center;">
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; margin: 0 0.2rem;"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settings-section" class="section-content" style="display: none;">
+      <h1><i class="fas fa-cog"></i> System Settings</h1>
+      <p style="color: #6c757d; margin-bottom: 2rem;">Configure system-wide settings</p>
+
+      <div class="form-container">
+        <h3 style="margin-bottom: 1.5rem;">General Settings</h3>
+
+        <div class="form-group">
+          <label class="form-label">System Name</label>
+          <input type="text" class="form-input" value="MediQueue Healthcare System">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Default Wait Time (minutes)</label>
+          <input type="number" class="form-input" value="20">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Max Queue Size</label>
+          <input type="number" class="form-input" value="50">
+        </div>
+
+        <h3 style="margin: 2rem 0 1.5rem;">Notification Settings</h3>
+
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" checked style="width: auto;">
+            <span>Enable SMS Notifications</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" checked style="width: auto;">
+            <span>Enable Email Notifications</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notification Before (minutes)</label>
+          <input type="number" class="form-input" value="10">
+        </div>
+
+        <h3 style="margin: 2rem 0 1.5rem;">Security Settings</h3>
+
+        <div class="form-group">
+          <label class="form-label">Session Timeout (minutes)</label>
+          <input type="number" class="form-input" value="30">
+        </div>
+
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" checked style="width: auto;">
+            <span>Require GPS Verification</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary btn-large" style="width: 100%; margin-top: 2rem;">
+          <i class="fas fa-save"></i> Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let checkInsChart, priorityChart;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadOverviewData();
+      loadClinics();
+      initializeCharts();
+    });
+
+    // Load overview data
+    async function loadOverviewData() {
+      try {
+        const [patientsRes, clinicsRes] = await Promise.all([
+          fetch('/api/patients'),
+          fetch('/api/clinics')
+        ]);
+
+        const patients = await patientsRes.json();
+        const clinics = await clinicsRes.json();
+
+        document.getElementById('totalPatients').textContent = patients.data?.length || 0;
+        document.getElementById('totalClinics').textContent = clinics.data?.length || 0;
+        document.getElementById('totalCheckIns').textContent = 15; // Mock data
+        document.getElementById('avgWait').textContent = 25; // Mock data
+
+        // Update clinic performance
+        if (clinics.success) {
+          updateClinicPerformance(clinics.data);
+        }
+      } catch (error) {
+        console.error('Error loading overview data:', error);
+      }
+    }
+
+    // Update clinic performance
+    function updateClinicPerformance(clinics) {
+      const performanceDiv = document.getElementById('clinicPerformance');
+      performanceDiv.innerHTML = clinics.map((clinic, index) => {
+        const satisfaction = clinic.statistics?.patientSatisfaction || 4.5;
+        const avgWait = clinic.statistics?.averageWaitTime || 25;
+        const totalVisits = clinic.statistics?.totalVisits || 0;
+
+        return `
+          <div style="padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px; background: linear-gradient(135deg, #ffffff, #f8f9fa); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="margin: 0 0 0.5rem 0;">${index + 1}. ${clinic.name}</h4>
+                <p style="color: #6c757d; margin: 0;">${clinic.address?.city || 'N/A'}</p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">
+                  ${satisfaction.toFixed(1)} <i class="fas fa-star" style="font-size: 1rem; color: gold;"></i>
+                </div>
+                <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">${totalVisits} visits</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+              <div style="flex: 1; padding: 0.8rem; background: #e7f5ff; border-radius: 10px; text-align: center;">
+                <div style="font-weight: 600; color: var(--primary-color);">${avgWait}m</div>
+                <small style="color: #6c757d;">Avg Wait</small>
+              </div>
+              <div style="flex: 1; padding: 0.8rem; background: #d3f9d8; border-radius: 10px; text-align: center;">
+                <div style="font-weight: 600; color: var(--success-color);">${Math.floor(totalVisits / 30)}/day</div>
+                <small style="color: #6c757d;">Avg Daily</small>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Load clinics
+    async function loadClinics() {
+      try {
+        const response = await fetch('/api/clinics');
+        const result = await response.json();
+
+        if (result.success) {
+          displayClinics(result.data);
+        }
+      } catch (error) {
+        console.error('Error loading clinics:', error);
+      }
+    }
+
+    // Display clinics
+    function displayClinics(clinics) {
+      const clinicsList = document.getElementById('clinicsList');
+      clinicsList.innerHTML = clinics.map(clinic => `
+        <div class="feature-card">
+          <h3><i class="fas fa-hospital"></i> ${clinic.name}</h3>
+          <p style="color: #6c757d; margin: 1rem 0;">
+            <i class="fas fa-map-marker-alt"></i> ${clinic.address?.street || 'N/A'}<br>
+            ${clinic.address?.city || ''}, ${clinic.address?.state || ''} ${clinic.address?.zipCode || ''}
+          </p>
+          <p style="color: #6c757d; margin: 0.5rem 0;">
+            <i class="fas fa-phone"></i> ${clinic.contactInfo?.phone || 'N/A'}
+          </p>
+          <p style="color: #6c757d; margin: 0.5rem 0;">
+            <i class="fas fa-envelope"></i> ${clinic.contactInfo?.email || 'N/A'}
+          </p>
+          <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="editClinic('${clinic._id}')">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-secondary" onclick="viewClinicQR('${clinic._id}')">
+              <i class="fas fa-qrcode"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Initialize charts
+    function initializeCharts() {
+      // Check-ins chart
+      const checkInsCtx = document.getElementById('checkInsChart');
+      checkInsChart = new Chart(checkInsCtx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Check-Ins',
+            data: [45, 52, 48, 65, 58, 42, 35],
+            borderColor: 'rgb(102, 126, 234)',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Priority chart
+      const priorityCtx = document.getElementById('priorityChart');
+      priorityChart = new Chart(priorityCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Normal', 'High', 'Emergency'],
+          datasets: [{
+            data: [65, 25, 10],
+            backgroundColor: [
+              'rgb(102, 126, 234)',
+              'rgb(251, 191, 36)',
+              'rgb(239, 68, 68)'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true
+        }
+      });
+    }
+
+    // Show section
+    function showSection(section) {
+      document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
+      document.getElementById(`${section}-section`).style.display = 'block';
+      
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      // Find and activate the clicked link
+      const activeLink = document.querySelector(`[onclick*="'${section}'"]`);
+      if (activeLink) activeLink.classList.add('active');
+    }
+
+    // Placeholder functions
+    function showAddClinicForm() {
+      alert('Add Clinic form would open here');
+    }
+
+    function showAddStaffForm() {
+      alert('Add Staff form would open here');
+    }
+
+    function editClinic(id) {
+      alert('Edit clinic: ' + id);
+    }
+
+    function viewClinicQR(id) {
+      alert('View QR Code for clinic: ' + id);
+    }
+  </script>
+</body>
+</html>
