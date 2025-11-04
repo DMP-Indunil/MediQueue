@@ -30,7 +30,7 @@ A modern, contactless healthcare queue management system built with Node.js, Exp
 ## 🛠️ Tech Stack
 
 - **Backend**: Node.js + Express.js v4.18.2
-- **Database**: MongoDB Atlas (Cloud) with Mongoose ODM
+- **Database**: MongoDB with Mongoose ODM v8.0.0
 - **Real-time**: Socket.io v4.6.1 for live queue updates
 - **Frontend**: Vanilla HTML/CSS/JavaScript (no build tools)
 - **Charts**: Chart.js
