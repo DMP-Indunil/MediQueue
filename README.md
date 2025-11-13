@@ -121,22 +121,42 @@ npm start
 
 ## 🚀 Deployment
 
-### Vercel Deployment
+### Vercel Deployment (Serverless)
 
-1. **Install Vercel CLI**
+**Note:** Socket.io real-time updates are replaced with polling for serverless compatibility.
+
+1. **Fork/Clone this repository**
+
+2. **Go to [Vercel](https://vercel.com) and import your GitHub repository**
+
+3. **Configure Environment Variables:**
+   - `MONGO_URI` - Your MongoDB connection string (MongoDB Atlas recommended)
+   - `NODE_ENV` - Set to `production`
+
+4. **Deploy** - Vercel will automatically detect the `vercel.json` configuration
+
+5. **Verify** - Visit your deployment URL and test the API health endpoint: `https://your-app.vercel.app/api/health`
+
+### Alternative: Railway/Render (Supports Socket.io)
+
+For full Socket.io real-time support, deploy to Railway or Render:
+
+**Railway:**
 ```bash
-npm install -g vercel
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
 ```
 
-2. **Deploy**
-```bash
-vercel
-```
-
-3. **Set environment variables in Vercel**
-- Go to your project settings
-- Add `MONGO_URI` environment variable
-- Redeploy
+**Render:**
+1. Connect your GitHub repository at [render.com](https://render.com)
+2. Select "Web Service"
+3. Add `MONGO_URI` environment variable
+4. Deploy
 
 ### Manual Deployment (Any Node.js Host)
 
