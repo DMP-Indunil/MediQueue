@@ -75,9 +75,9 @@
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/queue-poller.js"></script>
   <script>
-    let socket;
+    let queuePoller;
     let currentClinicId = null;
 
     // Load clinics
@@ -201,25 +201,42 @@
       if (currentClinicId) {
         document.getElementById('dashboardContent').style.display = 'block';
         
-        // Setup socket connection
-        if (socket) socket.disconnect();
-        socket = io();
-        socket.emit('join-clinic', currentClinicId);
+        // Stop previous poller
+        if (queuePoller) queuePoller.stop();
         
-        socket.on('queue-update', (data) => {
-          console.log('Queue update:', data);
-          loadQueue();
-          loadStats();
-        });
-
+        // Start polling for queue updates every 5 seconds
+        queuePoller = new QueuePoller(currentClinicId, (data) => {
+          if (data.success) {
+            // Update queue display
+            const queue = data.data.currentQueue;
+            const queueList = document.getElementById('queueList');
+            
+            if (queue.length === 0) {
+              queueList.innerHTML = '<p style=\"text-align: center; color: #666; padding: 2rem;\">No patients in queue</p>';
+            } else {
+              queueList.innerHTML = queue.map(patient => `
+                <div style=\"background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;\">
+                  <div>
+                    <strong style=\"font-size: 1.2rem; color: var(--primary-color);\">#${patient.position}</strong>
+                    <span style=\"margin-left: 1rem;\">${patient.patientName}</span>
+                    <span style=\"margin-left: 1rem; padding: 0.25rem 0.5rem; background: ${getStatusColor(patient.status)}; color: white; border-radius: 15px; font-size: 0.8rem;\">
+                      ${patient.status}
+                    </span>
+                    ${patient.priority !== 'normal' ? `<span style=\"margin-left: 0.5rem; color: red;\">⚠️ ${patient.priority.toUpperCase()}</span>` : ''}
+                  </div>
+                  <div>
+                    <small style=\"color: #666;\">${patient.visitReason}</small>
+                  </div>
+                </div>
+              `).join('');
+            }
+            loadStats();
+          }
+        }, 5000);
+        
+        queuePoller.start();
         loadQueue();
         loadStats();
-        
-        // Refresh every 30 seconds
-        setInterval(() => {
-          loadQueue();
-          loadStats();
-        }, 30000);
       } else {
         document.getElementById('dashboardContent').style.display = 'none';
       }
