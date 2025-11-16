@@ -15,7 +15,10 @@
       <div class="logo">
         <i class="fas fa-heartbeat"></i> MediQueue Staff
       </div>
-      <div class="nav-links">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="/staff-dashboard" class="nav-link active"><i class="fas fa-clipboard-list"></i> Queue</a>
         <a href="#" onclick="showSection('walkin')" class="nav-link"><i class="fas fa-user-plus"></i> Walk-In</a>
         <a href="#" onclick="showSection('search')" class="nav-link"><i class="fas fa-search"></i> Search</a>
@@ -163,25 +166,9 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       loadClinics();
-      initializeSocket();
     });
 
-    // Initialize Socket.IO
-    function initializeSocket() {
-      socket = io();
-      
-      socket.on('queueUpdated', (data) => {
-        console.log('Queue updated:', data);
-        if (data.clinicId === currentClinicId) {
-          loadQueue();
-        }
-      });
-
-      socket.on('patientCalled', (data) => {
-        console.log('Patient called:', data);
-        showNotification(`Patient ${data.patientName} has been called`);
-      });
-    }
+    let queuePoller = null;
 
     // Load clinics
     async function loadClinics() {
@@ -219,7 +206,19 @@
       if (!clinicId) return;
 
       currentClinicId = clinicId;
-      socket.emit('joinClinic', clinicId);
+      
+      // Stop previous poller
+      if (queuePoller) queuePoller.stop();
+      
+      // Start polling for updates
+      queuePoller = new QueuePoller(clinicId, (data) => {
+        if (data.success && data.data) {
+          queueData = data.data.checkIns || [];
+          updateQueueDisplay();
+          updateStats();
+        }
+      }, 5000);
+      queuePoller.start();
 
       try {
         const response = await fetch(`/api/queues/${clinicId}`);
@@ -434,6 +433,11 @@
     // Show notification
     function showNotification(message) {
       alert(message); // In production, use a better notification system
+    }
+    
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('active');
     }
   </script>
 </body>

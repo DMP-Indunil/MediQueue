@@ -15,7 +15,10 @@
       <div class="logo">
         <i class="fas fa-heartbeat"></i> MediQueue Admin
       </div>
-      <div class="nav-links">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="#" onclick="showSection('overview')" class="nav-link active"><i class="fas fa-chart-line"></i> Overview</a>
         <a href="#" onclick="showSection('clinics')" class="nav-link"><i class="fas fa-hospital"></i> Clinics</a>
         <a href="#" onclick="showSection('staff')" class="nav-link"><i class="fas fa-users"></i> Staff</a>
@@ -407,6 +410,11 @@
 
     function viewClinicQR(id) {
       alert('View QR Code for clinic: ' + id);
+    }
+    
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('active');
     }
   </script>
 </body>

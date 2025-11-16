@@ -13,9 +13,12 @@
   <nav class="navbar">
     <div class="nav-content">
       <div class="logo">
-        <i class="fas fa-heartbeat"></i> MediQueue
+        <i class="fas fa-heartbeat"></i> Analytics
       </div>
-      <div class="nav-links">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
         <a href="/login" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login</a>
         <a href="/admin-dashboard" class="nav-link"><i class="fas fa-user-shield"></i> Admin Dashboard</a>
@@ -81,6 +84,11 @@
 
     loadOverview();
     setInterval(loadOverview, 30000);
+    
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('active');
+    }
   </script>
 </body>
 </html>
